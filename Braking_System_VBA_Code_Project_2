@@ -1,0 +1,110 @@
+Option Explicit 'all variables must be declared
+Option Base 1 'Sets default array subscripts to 1
+'This program designes a braking system, specifically the number of
+'pistons in the front and rear calipers, the caliper piston diameter
+'(assuming all pistons in the front and the rear are the same), and
+'and the front and rear rotor radii, to achieve an actual B as close
+'to the value of the desired B as possible.
+Sub brake_system()
+'declare variables
+Dim input_array() As Double, output_array() As Double
+Dim dynamic_load As Double, front_axle_static_load As Double, c As Double, b As Double
+Dim rear_axle_static_load As Double, front_load As Double, rear_load As Double
+Dim front_max_force As Double, rear_max_force As Double, B_desired As Double, B_desired_round As Double, B_actual_round
+Dim radius1_counter As Double, radius2_counter As Double, front_effective_radius As Double, rear_effective_radius As Double
+Dim diameter_counter As Double, piston_area As Double, number_of_pistons1_counter As Double, number_of_pistons2_counter As Double
+Dim front_brake_gain As Double, rear_brake_gain As Double, B_actual As Double
+Dim pi As Double, counter As Double, Rf As Double, output_counter As Single, diameter_counter_round As Double
+
+Worksheets("brake_system").Activate 'specifies which worksheet to use
+
+ReDim input_array(1 To 12, 1) 'size of input array
+ReDim output_array(1 To 7, 1) 'size of output array
+pi = 4 * Atn(1) 'define pi
+'input
+For counter = 1 To 12
+    input_array(counter, 1) = Range("D" & counter + 4)
+Next counter
+    'Note- The order of the input arrays and what they mean:
+    'input_array(1,1) = input for vehicle weight (w)
+    'input_array(2,1) = input for vehicles wheel base (L)
+    'input_array(3,1) = input for height of vehicle's center of gravity (h)
+    'input_array(4,1) = input for the deceleration (Dx)
+    'input_array(5,1) = input for front weight distribution
+    'input_array(6,1) = input for rear weight distribution
+    'input_array(7,1) = input for front pad height
+    'input_array(8,1) = input for rear pad height
+    'input_array(9,1) = input for gravitational acceleration (g - units: in/s^2)
+    'input_array(10,1) = input for number of brakes in the front
+    'input_array(11,1) = input for number of brakes in the rear
+    'input_array(12,1) = user input tolerance
+
+'logic for desired B
+'calculaion for dynamic load is (h/L)*(W/g)*Dx
+dynamic_load = (input_array(3, 1) / input_array(2, 1)) * (input_array(1, 1) / input_array(9, 1)) * (input_array(4, 1) * input_array(9, 1))
+'c is distance from CG to the rear axle
+c = input_array(2, 1) * input_array(5, 1)
+'calculation for the front axle static load
+front_axle_static_load = (c / input_array(2, 1)) * input_array(1, 1)
+'b is distance from CG to the front axle
+b = input_array(2, 1) * input_array(6, 1)
+'calculation for the rear axle static load
+rear_axle_static_load = (b / input_array(2, 1)) * input_array(1, 1)
+'calculations for front and rear axles during braking
+front_load = front_axle_static_load + dynamic_load
+rear_load = rear_axle_static_load - dynamic_load
+'calculations for maximum braking force on the front and rear axles
+front_max_force = (input_array(4, 1) * input_array(9, 1)) * front_load
+rear_max_force = (input_array(4, 1) * input_array(9, 1)) * rear_load
+'calculation for desired B is determined by the ratio between the maximum forces
+B_desired = front_max_force / rear_max_force
+B_desired_round = Round(B_desired, 2) 'rounds the desired B to 2 decimal places
+
+'Note: The desired B is a function of the vehicle's static and dynamic weight distribution of the front
+'and rear axles.
+'now that we have the desired B, we have to acieve an actual B equal to,
+'or as close as possible to the desired B
+'logic for actual B
+For radius1_counter = 4 To 6 Step 0.25 'counter for the front rotor radius
+    front_effective_radius = radius1_counter - (input_array(7, 1) / 2) 'calculates the front effective radius
+        For radius2_counter = 3 To 4 Step 0.25 'counter for the rear rotor radius
+            rear_effective_radius = radius2_counter - (input_array(8, 1) / 2) 'calculates the rear effective radius
+                For diameter_counter = 0.25 To 0.5 Step 0.0625 'counter for the piston diameter
+                    piston_area = (1 / 4) * pi * (diameter_counter * diameter_counter) 'calculates the piston area
+                        For number_of_pistons1_counter = 1 To 3 'counter for the front number of caliper pistons
+                            front_brake_gain = 2 * (input_array(4, 1) * input_array(9, 1)) * piston_area * front_effective_radius * (number_of_pistons1_counter * input_array(10, 1)) 'calculates the front brake gain
+                               For number_of_pistons2_counter = 1 To 3 'counter for the rear number of caliper pistons
+                                    rear_brake_gain = 2 * (input_array(4, 1) * input_array(9, 1)) * piston_area * rear_effective_radius * (number_of_pistons2_counter * input_array(11, 1)) 'calculates the rear brake gain
+                                        'calculations for actaul B
+                                        B_actual = front_brake_gain / rear_brake_gain
+                                        B_actual_round = Round(B_actual, 2) 'rounds the desired B to 2 decimal places
+                                            
+                                            'setting up output values for the output array
+                                            output_array(1, 1) = B_desired_round 'output for the desired B (slope of the proportional line)
+                                            output_array(2, 1) = B_actual_round 'output for the actual B
+                                            output_array(3, 1) = number_of_pistons1_counter 'output for the number of pistons in the front caliper
+                                            output_array(4, 1) = number_of_pistons2_counter 'output for the number of pistons in the rear caliper
+                                            diameter_counter_round = Round(diameter_counter, 2) 'rounds the caliper piston diameter to 2 sig figs
+                                            output_array(5, 1) = diameter_counter_round 'output for caliper piston diameter
+                                            output_array(6, 1) = radius1_counter 'output for front rotor radius
+                                            output_array(7, 1) = radius2_counter 'output for rear rotor radius
+                                            
+                                            'The statement "Exit For" moves out of a For loop
+                                            'the next line determines if the loop should stop
+                                            If Abs(B_actual - B_desired) <= input_array(12, 1) Then Exit For
+                                
+                                Next number_of_pistons2_counter
+                        Next number_of_pistons1_counter
+                Next diameter_counter
+        Next radius2_counter
+Next radius1_counter
+
+'array to display outputs on worksheet
+For output_counter = 1 To 7
+    Range("I" & output_counter + 4).Value = output_array(output_counter, 1)
+Next output_counter
+
+End Sub
+
+'Reference for brake pad heights
+'https://www.pegasusautoracing.com/group.asp?GroupID=PADSFF
