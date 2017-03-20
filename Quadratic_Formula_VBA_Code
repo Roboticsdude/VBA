@@ -1,0 +1,45 @@
+Option Explicit
+Type complex
+real As Single
+imag As Single
+End Type
+Sub quad()
+'variables declaration statements
+Dim a As Single, b As Single, c As Single, d As Single, r1 As Single, r2 As Single
+Dim rc As complex
+
+'input
+a = Val(InputBox("input a -Coefficient of x^2"))
+b = Val(InputBox("input b -Coefficient of x"))
+c = Val(InputBox("input c -Constant"))
+
+'echo inputs to worksheet
+Worksheets(1).Activate
+
+Cells(1, 1).Value = "a"
+Cells(1, 2).Value = a
+Range("A2").Value = "b"
+Range("B2").Value = b
+Range("A3").Value = "c"
+Range("B3").Value = c
+
+'calculate the discriminant
+d = b ^ 2 - 4 * a * c
+
+'logic
+If d >= 0 Then
+    r1 = (-b + Sqr(d)) / (2 * a)
+    r2 = (-b - Sqr(d)) / (2 * a)
+    MsgBox "Real Roots" & Chr(13) & "r1 = " & r1 & Chr(13) & "r2 = " & r2, , "Quadratic Roots"
+Else
+rc.real = -b / (2 * a)
+rc.imag = Sqr(-d) / (2 * a)
+MsgBox "Imaginary Roots" & Chr(13) & "r = " & rc.real & "" & rc.imag & "i"
+End If
+End Sub
+
+
+
+
+
+
