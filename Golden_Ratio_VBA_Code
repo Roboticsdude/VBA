@@ -1,0 +1,54 @@
+Option Explicit
+
+Sub golden()
+'declare
+Dim n As Integer
+n = Range("H1").Value
+'array
+Dim list() As Double, gr As Double, a As Integer, list2() As Double
+ReDim list(1 To 3200, 1): ReDim list2(1 To n, 1)
+
+'set up first two
+list(1, 1) = 0
+Cells(2, 1).Value = list(1, 1)
+list(2, 1) = 1
+Cells(3, 1).Value = list(2, 1)
+
+
+list2(2, 1) = list(1, 1) / list(2, 1)
+
+
+'loop for fibonacci
+For a = 3 To n
+list(a, 1) = list(a - 1, 1) + list(a - 2, 1)
+Cells(a + 1, 1).Value = list(a, 1)
+Next a
+
+Dim q As Integer
+q = n - 1
+'calculate ratio
+For a = 1 To q
+list2(a, 1) = list(a, 1) / list(a + 1, 1)
+Cells(a + 1, 2).Value = list2(a, 1)
+Next
+
+'calculate golden ratio
+gr = (Sqr(5) - 1) / 2
+
+Range("k1").Value = gr
+
+End Sub
+
+
+Sub clear()
+
+Range("A2").Select
+Range(Selection, Selection.End(xlDown)).Select
+Selection.ClearContents
+Range("B2").Select
+Range(Selection, Selection.End(xlDown)).Select
+Selection.ClearContents
+Range("k1").Select
+Selection.ClearContents
+End Sub
+
