@@ -1,0 +1,105 @@
+Option Explicit
+Option Base 1 'Sets default array subscripts to 1
+
+'This code will allow the user to choose an optimum location for a distribution center.
+'The distribution center will service six customers in a 30 x 30-mile area.  The goal is to minimize
+'the delivery costs per week by finding the optimum location for the distribution center.
+
+Sub distribution_locations()
+'declaring variables
+Dim user_input As Double, size As Double
+'declaring arrays. Note: an array is a collection
+'of values that are referenced by a single variable name.
+Dim y_axis() As Double, x_axis() As Double ' dynamic arrays
+Dim cust_info(1 To 6, 3) As Single 'fixed-size array
+Dim axis_counter As Double, row As Double, column As Double
+Dim X As Double, Y As Double, customer As Double, counter As Double
+Dim distance As Double, c_i As Double, cost As Double
+Dim low_cost As Single 'optimum weekly cost
+'declaring optimum X and Y locations & weekly costs at four adjacent locations to optimum
+Dim lowcost_rowindex As Double, lowcost_columnindex As Double
+Dim adj_up As Single, adj_down As Single, adj_left As Single, adj_right As Single
+
+Worksheets("Distr_Ctrs").Activate 'specifies which worksheet to use
+
+    Range("E9:DV130").Select ' clears the previous total cost table
+    Selection.ClearContents
+    Range("B10:C10").Select      ' clears the previous optimum x & y locations
+    Selection.ClearContents
+    Range("B13:C13").Select  'clears the previous optimum weekly cost
+    Selection.ClearContents
+    Range("C16", "C17").Select 'the remaining (C16, C17, B17, D17, C18)clears the previous
+    Selection.ClearContents    'weekly costs at four adjacent locations to the optimum
+    Range("B17", "D17").Select
+    Selection.ClearContents
+    Range("C18").Select
+    Selection.ClearContents
+    
+ 'input box for user to enter desired precision
+user_input = Val(InputBox("Enter a desired precision (in miles), for example: for a precision of every half a mile, enter 0.5"))
+size = Abs(0 - 30) / user_input + 1 '0 & 30 in the equation are the starting and ending points
+
+'Note to self: 'For/next loop provides a much more concise and
+'efficient means of implementing count-controlled iteration than
+'does a comparable logical loop
+
+'output y & x axis
+ReDim y_axis(size, 1), x_axis(size) 'redefines the number of dimensions and elements in the array
+
+'Since increment of 1 is desired, the Step part of
+'the For statement is not necessary
+For axis_counter = 1 To size
+    y_axis(axis_counter, 1) = row
+    row = row + user_input
+    Range(Cells(10, 5), Cells(size + 9, 5)).Value = y_axis 'displays y values on worksheet (miles)
+    x_axis(axis_counter) = column
+    column = column + user_input
+    Range(Cells(9, 6), Cells(9, size + 5)).Value = x_axis 'displays x values on worksheet (miles)
+Next axis_counter
+
+'Nested For/Next Loop
+'calculating distance, cost, and sum from the given equations
+For Y = 10 To size + 9
+    For X = 6 To size + 5
+        For counter = 1 To 6
+            cust_info(counter, 1) = Cells(counter + 1, 2) 'pulls input values for x locations (miles)
+            cust_info(counter, 2) = Cells(counter + 1, 3) 'pulls input values for y locations (miles)
+            cust_info(counter, 3) = Cells(counter + 1, 4) 'pulls input values for volume (tons/week)
+            'cells(a,5) starts the loop at the right row that will vary while 5 keeps it in the same
+            'column the whole time while cells(9,b) keeps the row constant while the column will vary
+            distance = Abs(Cells(Y, 5) - cust_info(counter, 1)) + Abs(Cells(9, X) - cust_info(counter, 2))
+            'cust_info(i,3) referencing from array created above
+            c_i = 0.5 * distance * cust_info(counter, 3)
+            cost = c_i + cost
+            Cells(Y, X) = cost
+        Next counter
+        cost = 0 'resets cost
+    Next X
+Next Y
+
+'Finding the best x and y
+low_cost = Cells(10, 6) 'Lowest cost will initially be the value in the 1st cell
+'The next step will be to compare the value of the next cell to the initial cell
+For Y = 10 To size + 9
+    For X = 6 To size + 5
+        If Cells(Y, X) < low_cost Then
+            low_cost = Cells(Y, X) 'finds lowest optimum weekly cost
+            lowcost_rowindex = (Y - 10) * user_input 'selects optimum Y location
+            lowcost_columnindex = (X - 6) * user_input 'selects optimum X location
+            adj_up = Cells(Y - 1, X) 'selects weekly cost directly above the optimum
+            adj_down = Cells(Y + 1, X) 'selects weekly cost diretly below the optimum
+            adj_left = Cells(Y, X - 1) 'selects weekly cost directly to the left of optimum
+            adj_right = Cells(Y, X + 1) 'selects weekly cost directly to the right of the optimum
+        End If
+    Next X
+Next Y
+
+'displays optimum X and Y locations of the distribution center
+Cells(10, 2) = lowcost_columnindex 'X location
+Cells(10, 3) = lowcost_rowindex 'Y location
+'displays optimum weekly cost
+Cells(13, 2) = low_cost
+'displays weekly cost at four adjacent locations to optimum
+Cells(17, 3) = low_cost: Cells(16, 3) = adj_up: Cells(18, 3) = adj_down: Cells(17, 2) = adj_left: Cells(17, 4) = adj_right
+
+End Sub
